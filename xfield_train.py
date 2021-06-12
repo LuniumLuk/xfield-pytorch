@@ -13,11 +13,11 @@ from load_data import load_data
 import flow_vis
 
 args = EasyDict({
-    'dataset': './data/t2',
-    'savedir': './results/t2',
+    'dataset': './data/t3',
+    'savedir': './results/t3',
     'type': ['light', 'time', 'view'],
     'dims': [3, 3, 3],
-    'DSfactor': 12,
+    'DSfactor': 16,
     'neighbor_num': 2,
     'lr': 0.0001,
     'sigma': 0.1,
@@ -32,11 +32,11 @@ savedir = args.savedir
 if not os.path.exists(savedir):
     os.mkdir(savedir)
 
-if not os.path.exists(os.path.join(savedir,'trained model') ):
+if not os.path.exists(os.path.join(savedir,'trained model')):
     os.mkdir( os.path.join(savedir,'trained model') )
     print('creating directory %s'%(os.path.join(savedir,'trained model')))
 
-if not os.path.exists(os.path.join(savedir,'saved training') ):
+if not os.path.exists(os.path.join(savedir,'saved training')):
     os.mkdir( os.path.join(savedir,'saved training') )
     print('creating directory %s'%(os.path.join(savedir,'saved training')))
 
@@ -194,3 +194,30 @@ while(epoch <= epoch_end and avg_loss >= args.stop_l1_thr):
     if(epoch == epoch_end // 2):
         for g in optimizer.param_groups:
             g['lr'] = 0.00005
+
+trained_model_filename = os.path.join(savedir,'trained model/trained_model')
+torch.save(model.state_dict(), trained_model_filename)
+
+test_args = EasyDict({
+    'fps': 90,
+    'scale': 90
+})
+
+if not os.path.exists(savedir):
+    os.mkdir(savedir)
+
+if not os.path.exists(os.path.join(savedir,"rendered videos")):
+    os.mkdir( os.path.join(savedir,"rendered videos"))
+
+print('<Test> XField type: {}'.format(args.type))
+print('<Test> Dimension of input xfield: {}'.format(args.dims))
+print('<Test> output video fps: {}'.format(test_args.fps))
+print('<Test> number of intermediate points for interpolation: {}'.format(test_args.scale))
+
+dims = args.dims
+num_n = 8
+
+if(num_n > np.product(dims)):
+    num_n = np.product(dims)
+
+num_output = len(args.type) * 2

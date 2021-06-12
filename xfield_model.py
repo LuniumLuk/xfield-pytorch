@@ -74,7 +74,6 @@ class Net(torch.nn.Module):
         coord_input = x[:1,::]
         coord_neighbor = x[1:,::]
 
-
         delta = torch.tile(coord_input - coord_neighbor, (1, 1, img_h, img_w))
         delta_light = delta[:,0:1,:,:]
         delta_view = delta[:,1:2,:,:]
@@ -108,6 +107,61 @@ class Net(torch.nn.Module):
 
         return interpolated
 
+    def blending_test(self, coord_in, coord_neighbor, neighbors_img, neighbors_flow, flows, albedo):
+        
+        epsilon = 0.00001
+
+        img_h = self.img_h
+        img_w = self.img_w
+
+        light_flow = flows[:1,0:2,:,:]
+        view_flow = flows[:1,2:4,:,:]
+        time_flow = flows[:1,4:6,:,:]
+
+        light_flow_neighbor = neighbors_flow[:,0:2,:,:]
+        view_flow_neighbor = neighbors_flow[:,2:4,:,:]
+        time_flow_neighbor = neighbors_flow[:,4:6,:,:]
+
+        delta = torch.tile(coord_in - coord_neighbor, (1, 1, img_h, img_w))
+        delta_light = delta[:,0:1,:,:]
+        delta_view = delta[:,1:2,:,:]
+        delta_time = delta[:,2:3,:,:]
+
+        forward_shading = delta_view*view_flow + delta_time*time_flow + delta_light*light_flow
+        forward_albedo = delta_view*view_flow + delta_time*time_flow
+        shading = neighbors_img / albedo
+
+        x_base, y_base = torch.meshgrid(torch.linspace(-1.0, 1.0, self.img_h), torch.linspace(-1.0, 1.0, self.img_w))
+        grid_base = torch.stack((y_base, x_base)).permute(1,2,0).unsqueeze(0).repeat(2,1,1,1).cuda()
+
+        forward_shading_grid = grid_base + forward_shading.permute(0,2,3,1)
+        forward_albedo_grid = grid_base + forward_albedo.permute(0,2,3,1)
+
+        warped_shading = torch.nn.functional.grid_sample(shading, forward_shading_grid)
+        warped_view_flow = torch.nn.functional.grid_sample(view_flow_neighbor, forward_shading_grid)
+        warped_time_flow = torch.nn.functional.grid_sample(time_flow_neighbor, forward_shading_grid)
+        warped_light_flow = torch.nn.functional.grid_sample(light_flow_neighbor, forward_shading_grid)
+        warped_albedo = torch.nn.functional.grid_sample(albedo, forward_albedo_grid)
+
+        backward_shading = delta_view*warped_view_flow + delta_time*warped_time_flow + delta_light*warped_light_flow 
+        backward_albedo = delta_view*warped_view_flow + delta_time*warped_time_flow
+
+        # Handeling Consistency
+        dist_shading = torch.sum(torch.abs(backward_shading-forward_shading), dim=-1, keepdim=True)
+        weight_shading = torch.exp(-self.args.sigma*img_w*dist_shading)
+        weight_occ_shading = weight_shading / (torch.sum(weight_shading,0,keepdim=True) + epsilon)
+        multiplied = torch.multiply(warped_shading,weight_occ_shading)
+        novel_shading = torch.sum(multiplied,0,keepdim=True)
+
+        dist_albedo = torch.sum(torch.abs(backward_albedo-forward_albedo), dim=-1, keepdim=True)
+        weight_albedo = torch.exp(-self.args.sigma*img_w*dist_albedo)
+        weight_occ_albedo = weight_albedo / (torch.sum(weight_albedo,0,keepdim=True) + epsilon)
+        multiplied = torch.multiply(warped_albedo,weight_occ_albedo)
+        novel_albedo = torch.sum(multiplied,0,keepdim=True)
+
+        interpolated = novel_shading * novel_albedo
+
+        return interpolated
 
     def generate_factors(self, h, w):
         temp = h
@@ -151,7 +205,7 @@ class Net(torch.nn.Module):
             total_param_count += count
         return total_param_count
 
-    def forward(self, x, neighbors, albedo_index):
+    def forward(self, x, neighbors=None, albedo_index=None, flow=False, test=False):
 
         input_x = torch.clone(x)
 
@@ -161,13 +215,16 @@ class Net(torch.nn.Module):
             x = self.nets[i * 4 + 2](x)
             x = self.nets[i * 4 + 3](x)
             if(i == 0):
-                coordconv_tl = torch.tile(self.coordconv, [3,1,1,1])
+                coordconv_tl = torch.tile(self.coordconv, [x.shape[0],1,1,1])
                 coordconv_tl = self.coord_pad(coordconv_tl)
                 x = torch.cat((x, coordconv_tl), dim=1)
         
         x = self.flow_pad(x)
         x = self.flow_conv2d(x)
         x = self.flow_activate(x)
+
+        if(flow): 
+            return x
         
         if(not isinstance(albedo_index, np.int32)):
             albedo_index = albedo_index.int().item()
