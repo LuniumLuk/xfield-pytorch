@@ -14,7 +14,7 @@ def load_data(args):
     neighbor_num = args.neighbor_num # unused when dims = 3
     dims = args.dims
 
-    print('Resolution after Downsampling: %d x %d' % (img_h, img_w))
+    print('<Load Data> Resolution after Downsampling: %d x %d' % (img_h, img_w))
 
     coordinates = []
     pairs = []
@@ -22,6 +22,8 @@ def load_data(args):
 
     # Only handles args.type == ['light', 'view', 'time']
     for i in range(len(image_filenames)):
+
+        print('\r<Load Data> Loading image No.{}'.format(i + 1), end=' ')
         
         img = cv2.imread(os.path.join(args.dataset, image_filenames[i]))
         # when downsampling images, recommend using INTER_AREA as interpolation
@@ -64,5 +66,7 @@ def load_data(args):
     # img_data -> (img_count, h, w, RGB)
     # coordinates -> (img_count, 1, 1, coords), coords as in [light, view, time]
     # training_pairs -> (img_count * dims, img_indexes), img_indexes as in [self, left_neighbor, right_neighbor, albedo]
+
+    print('\n<Load Data> Finish Loading data')
 
     return img_data, coordinates, training_pairs, img_h, img_w
