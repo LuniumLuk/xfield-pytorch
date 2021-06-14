@@ -132,28 +132,28 @@ class Net(torch.nn.Module):
         shading = neighbors_img / albedo
 
         x_base, y_base = torch.meshgrid(torch.linspace(-1.0, 1.0, self.img_h), torch.linspace(-1.0, 1.0, self.img_w))
-        grid_base = torch.stack((y_base, x_base)).permute(1,2,0).unsqueeze(0).repeat(2,1,1,1).cuda()
+        grid_base = torch.stack((y_base, x_base)).permute(1,2,0).unsqueeze(0).repeat(forward_shading.shape[0],1,1,1).cuda()
 
         forward_shading_grid = grid_base + forward_shading.permute(0,2,3,1)
         forward_albedo_grid = grid_base + forward_albedo.permute(0,2,3,1)
 
-        warped_shading = torch.nn.functional.grid_sample(shading, forward_shading_grid)
-        warped_view_flow = torch.nn.functional.grid_sample(view_flow_neighbor, forward_shading_grid)
-        warped_time_flow = torch.nn.functional.grid_sample(time_flow_neighbor, forward_shading_grid)
-        warped_light_flow = torch.nn.functional.grid_sample(light_flow_neighbor, forward_shading_grid)
-        warped_albedo = torch.nn.functional.grid_sample(albedo, forward_albedo_grid)
+        warped_shading = torch.nn.functional.grid_sample(shading.float(), forward_shading_grid, mode='bilinear', padding_mode='border', align_corners=False)
+        warped_view_flow = torch.nn.functional.grid_sample(view_flow_neighbor, forward_shading_grid, mode='bilinear', padding_mode='border', align_corners=False)
+        warped_time_flow = torch.nn.functional.grid_sample(time_flow_neighbor, forward_shading_grid, mode='bilinear', padding_mode='border', align_corners=False)
+        warped_light_flow = torch.nn.functional.grid_sample(light_flow_neighbor, forward_shading_grid, mode='bilinear', padding_mode='border', align_corners=False)
+        warped_albedo = torch.nn.functional.grid_sample(albedo.float(), forward_albedo_grid, mode='bilinear', padding_mode='border', align_corners=False)
 
         backward_shading = delta_view*warped_view_flow + delta_time*warped_time_flow + delta_light*warped_light_flow 
         backward_albedo = delta_view*warped_view_flow + delta_time*warped_time_flow
 
         # Handeling Consistency
-        dist_shading = torch.sum(torch.abs(backward_shading-forward_shading), dim=-1, keepdim=True)
+        dist_shading = torch.sum(torch.abs(backward_shading-forward_shading), dim=1, keepdim=True)
         weight_shading = torch.exp(-self.args.sigma*img_w*dist_shading)
         weight_occ_shading = weight_shading / (torch.sum(weight_shading,0,keepdim=True) + epsilon)
         multiplied = torch.multiply(warped_shading,weight_occ_shading)
         novel_shading = torch.sum(multiplied,0,keepdim=True)
 
-        dist_albedo = torch.sum(torch.abs(backward_albedo-forward_albedo), dim=-1, keepdim=True)
+        dist_albedo = torch.sum(torch.abs(backward_albedo-forward_albedo), dim=1, keepdim=True)
         weight_albedo = torch.exp(-self.args.sigma*img_w*dist_albedo)
         weight_occ_albedo = weight_albedo / (torch.sum(weight_albedo,0,keepdim=True) + epsilon)
         multiplied = torch.multiply(warped_albedo,weight_occ_albedo)
@@ -205,7 +205,7 @@ class Net(torch.nn.Module):
             total_param_count += count
         return total_param_count
 
-    def forward(self, x, neighbors=None, albedo_index=None, flow=False, test=False):
+    def forward(self, x, neighbors=None, albedo_index=None, coord_neighbor=None, neighbors_flow=None,  flow=False, test=False):
 
         input_x = torch.clone(x)
 
@@ -226,9 +226,22 @@ class Net(torch.nn.Module):
         if(flow): 
             return x
         
-        if(not isinstance(albedo_index, np.int32)):
+        if(not test and not isinstance(albedo_index, np.int32)):
             albedo_index = albedo_index.int().item()
-        albedo = self.albedos[albedo_index,::]
-        interpolated = self.blending(input_x, neighbors, x, albedo)
         
-        return interpolated, x
+        albedo = self.albedos[albedo_index,::]
+        if(test):
+            interpolated = self.blending_test(
+                input_x, 
+                coord_neighbor, 
+                neighbors, 
+                neighbors_flow, 
+                x, 
+                albedo)
+        else:
+            interpolated = self.blending(input_x, neighbors, x, albedo)
+        
+        if(test):
+            return interpolated
+        else:
+            return interpolated, x

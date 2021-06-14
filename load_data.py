@@ -5,7 +5,6 @@ import os
 def load_data(args):
 
     image_filenames = os.listdir(args.dataset)
-    print(image_filenames)
 
     img =  cv2.imread(os.path.join(args.dataset, image_filenames[0]))
     img_h, img_w, _ = img.shape

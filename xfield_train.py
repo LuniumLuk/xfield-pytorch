@@ -13,11 +13,11 @@ from load_data import load_data
 import flow_vis
 
 args = EasyDict({
-    'dataset': './data/t3',
-    'savedir': './results/t3',
+    'dataset': './data/t5',
+    'savedir': './results/t5',
     'type': ['light', 'time', 'view'],
     'dims': [3, 3, 3],
-    'DSfactor': 16,
+    'DSfactor': 8,
     'neighbor_num': 2,
     'lr': 0.0001,
     'sigma': 0.1,
@@ -195,29 +195,7 @@ while(epoch <= epoch_end and avg_loss >= args.stop_l1_thr):
         for g in optimizer.param_groups:
             g['lr'] = 0.00005
 
-trained_model_filename = os.path.join(savedir,'trained model/trained_model')
+print('\n------------ save trained model ------------')
+
+trained_model_filename = os.path.join(savedir,'trained model/trained_model.pt')
 torch.save(model.state_dict(), trained_model_filename)
-
-test_args = EasyDict({
-    'fps': 90,
-    'scale': 90
-})
-
-if not os.path.exists(savedir):
-    os.mkdir(savedir)
-
-if not os.path.exists(os.path.join(savedir,"rendered videos")):
-    os.mkdir( os.path.join(savedir,"rendered videos"))
-
-print('<Test> XField type: {}'.format(args.type))
-print('<Test> Dimension of input xfield: {}'.format(args.dims))
-print('<Test> output video fps: {}'.format(test_args.fps))
-print('<Test> number of intermediate points for interpolation: {}'.format(test_args.scale))
-
-dims = args.dims
-num_n = 8
-
-if(num_n > np.product(dims)):
-    num_n = np.product(dims)
-
-num_output = len(args.type) * 2
