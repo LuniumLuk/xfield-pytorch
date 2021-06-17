@@ -74,7 +74,8 @@ class Net(torch.nn.Module):
         coord_input = x[:1,::]
         coord_neighbor = x[1:,::]
 
-        delta = torch.tile(coord_input - coord_neighbor, (1, 1, img_h, img_w))
+        # delta = torch.tile(coord_input - coord_neighbor, (1, 1, img_h, img_w))
+        delta = (coord_input - coord_neighbor).repeat(1, 1, img_h, img_w)
         delta_light = delta[:,0:1,:,:]
         delta_view = delta[:,1:2,:,:]
         delta_time = delta[:,2:3,:,:]
@@ -87,7 +88,7 @@ class Net(torch.nn.Module):
 
         x_base, y_base = torch.meshgrid(torch.linspace(-1.0, 1.0, self.img_h), torch.linspace(-1.0, 1.0, self.img_w))
         grid_base = torch.stack((y_base, x_base)).permute(1,2,0).unsqueeze(0).repeat(2,1,1,1).cuda()
-
+    
         offset_forward_grid = grid_base + offset_forward.permute(0,2,3,1)
 
         warped_shading = torch.nn.functional.grid_sample(shading.float(), offset_forward_grid, mode='bilinear', padding_mode='border', align_corners=False)
@@ -122,7 +123,8 @@ class Net(torch.nn.Module):
         view_flow_neighbor = neighbors_flow[:,2:4,:,:]
         time_flow_neighbor = neighbors_flow[:,4:6,:,:]
 
-        delta = torch.tile(coord_in - coord_neighbor, (1, 1, img_h, img_w))
+        # delta = torch.tile(coord_in - coord_neighbor, (1, 1, img_h, img_w))
+        delta = (coord_in - coord_neighbor).repeat(1, 1, img_h, img_w)
         delta_light = delta[:,0:1,:,:]
         delta_view = delta[:,1:2,:,:]
         delta_time = delta[:,2:3,:,:]
@@ -215,7 +217,8 @@ class Net(torch.nn.Module):
             x = self.nets[i * 4 + 2](x)
             x = self.nets[i * 4 + 3](x)
             if(i == 0):
-                coordconv_tl = torch.tile(self.coordconv, [x.shape[0],1,1,1])
+                # coordconv_tl = torch.tile(self.coordconv, [x.shape[0],1,1,1])
+                coordconv_tl = self.coordconv.repeat(x.shape[0],1,1,1)
                 coordconv_tl = self.coord_pad(coordconv_tl)
                 x = torch.cat((x, coordconv_tl), dim=1)
         
