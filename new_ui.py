@@ -69,12 +69,20 @@ def mouse_motion(event):
             canvas.create_oval(oval_x2 - 4, oval_y2 - 4, oval_x2 + 4, oval_y2 + 4, fill="black", tag="oval2")
             time_value = transformOval2()
             canvas.create_text(510, 380, text='Time:' + str(time_value), tag="time_text")
-        img = x.generateResult(light_value, view_value, time_value)
-        img = cv2.resize(img, (380, 280))
-        result_image = Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
-        result_photo = ImageTk.PhotoImage(result_image)
-        canvas.create_image(210, 200, image=result_photo, tag="image")
-        canvas.update()
+        if mode == ['light','view','time']:
+            img = x.generate3DimensionResult(light_value, view_value, time_value)
+            img = cv2.resize(img, (380, 280))
+            result_image = Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+            result_photo = ImageTk.PhotoImage(result_image)
+            canvas.create_image(210, 200, image=result_photo, tag="image")
+            canvas.update()
+        elif mode == ['time']:
+            img = x.generate1DimensionResult(time_value)
+            img = cv2.resize(img, (380, 280))
+            result_image = Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+            result_photo = ImageTk.PhotoImage(result_image)
+            canvas.create_image(210, 200, image=result_photo, tag="image")
+            canvas.update()
 
 
 def transformOval1():
@@ -113,14 +121,20 @@ def resize(event):
     canvas.delete("scale_text")
     canvas.delete("oval1")
     canvas.delete("oval2")
-    canvas.create_oval(oval_x1 - 4, oval_y1 - 4, oval_x1 + 4, oval_y1 + 4, fill="black", tag="oval1")
-    canvas.create_oval(oval_x2 - 4, oval_y2 - 4, oval_x2 + 4, oval_y2 + 4, fill="black", tag="oval2")
-    canvas.create_text(510, 340, text='Light:' + str(light_value), tag="light_text")
-    canvas.create_text(510, 360, text='View:' + str(view_value), tag="view_text")
-    canvas.create_text(510, 380, text='Time:' + str(time_value), tag="time_text")
-    canvas.create_text(585, 315, text=str(max_coordinate), tag="scale_text_x")
-    canvas.create_text(430, 95, text=str(max_coordinate), tag="scale_text_y")
-    canvas.create_text(585, 250, text=str(max_coordinate), tag="scale_text")
+
+    if mode == ["time"]:
+        canvas.create_text(510, 380, text='Time:' + str(time_value), tag="time_text")
+        canvas.create_text(585, 315, text=str(max_coordinate), tag="scale_text")
+        canvas.create_oval(oval_x2 - 4, oval_y2 - 4, oval_x2 + 4, oval_y2 + 4, fill="black", tag="oval2")
+    elif mode == ['light','view','time'] :
+        canvas.create_text(510, 380, text='Time:' + str(time_value), tag="time_text")
+        canvas.create_text(510, 340, text='Light:' + str(light_value), tag="light_text")
+        canvas.create_text(510, 360, text='View:' + str(view_value), tag="view_text")
+        canvas.create_text(585, 315, text=str(max_coordinate), tag="scale_text_x")
+        canvas.create_text(430, 95, text=str(max_coordinate), tag="scale_text_y")
+        canvas.create_text(585, 250, text=str(max_coordinate), tag="scale_text")
+        canvas.create_oval(oval_x1 - 4, oval_y1 - 4, oval_x1 + 4, oval_y1 + 4, fill="black", tag="oval1")
+        canvas.create_oval(oval_x2 - 4, oval_y2 - 4, oval_x2 + 4, oval_y2 + 4, fill="black", tag="oval2")
 
 
 def cmb_select(event):
@@ -176,14 +190,14 @@ def draw_all():
 
 
 def cmb_select_main(dataset):
-    global x, canvas, result_photo
+    global x, canvas, result_photo,mode
     delete_all()
     if dataset == "apple-3-dimension":
         draw_all()  #绘制所有canvas内容
         args = EasyDict({
             'dataset': './data/3x3x3/apple',
             'savedir': './results/3x3x3/apple',
-            'type': ['light', 'time', 'view'],
+            'type': ['light','view','time'],
             'dims': [3, 3, 3],
             'DSfactor': 8,
             'neighbor_num': 4,
@@ -191,6 +205,7 @@ def cmb_select_main(dataset):
             'sigma': 0.1,
             'stop_l1_thr': 0.01
         })
+        mode = ['light','view','time']
         num_n = 8  # 生成用的邻居数量
         scale = 90
         x = XFieldTest(args, num_n, scale)
@@ -200,8 +215,32 @@ def cmb_select_main(dataset):
         result_photo = ImageTk.PhotoImage(result_image)
         canvas.create_image(210, 200, image=result_photo, tag="image")
         canvas.update()
-    elif dataset == "t6-dimension-time":
+    elif dataset == "mydata-3-dimension":
+        draw_all()  #绘制所有canvas内容
+        args = EasyDict({
+            'dataset': './data/3x3x3/mydata',
+            'savedir': './results/3x3x3/mydata',
+            'type': ['light','view','time'],
+            'dims': [3, 3, 3],
+            'DSfactor': 16,
+            'neighbor_num': 8,
+            'lr': 0.0001,
+            'sigma': 0.1,
+            'stop_l1_thr': 0.01
+        })
+        mode = ['light','view','time']
+        num_n = 8  # 生成用的邻居数量
+        scale = 90
+        x = XFieldTest(args, num_n, scale)
+        img = x.generate3DimensionResult(light_value, view_value, time_value)
+        img = cv2.resize(img, (380, 280))
+        result_image = Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+        result_photo = ImageTk.PhotoImage(result_image)
+        canvas.create_image(210, 200, image=result_photo, tag="image")
+        canvas.update()
+    elif dataset == "t6-1-dimension-time":
         # 第二个滑块
+        mode = ['time']
         canvas.create_oval(oval_x2 - 4, oval_y2 - 4, oval_x2 + 4, oval_y2 + 4, fill="black", tag="oval2")
         # 单维轴
         canvas.create_line(440, 300, 580, 300, tag="1-dimension-line")
@@ -210,20 +249,21 @@ def cmb_select_main(dataset):
         canvas.create_text(585, 315, text=str(max_coordinate), tag="scale_text")
         canvas.create_text(430, 315, text='0', tag="zero2")
         args = EasyDict({
-            'dataset': './data/3x3x3/t6',
-            'savedir': './results/3x3x3/t6',
+            'dataset': './data/t6',
+            'savedir': './results/t6',
             'type': ['view'],
             'dims': [3],
-            'DSfactor': 8,
+            'DSfactor': 12,
             'neighbor_num': 2,
             'lr': 0.0001,
             'sigma': 0.1,
-            'stop_l1_thr': 0.01
+            'stop_l1_thr': 0.01,
+            'stop_delta_l1_thr': 0.0005
         })
-        num_n = 8  # 生成用的邻居数量
+        num_n = 2  # 生成用的邻居数量
         scale = 90
         x = XFieldTest(args, num_n, scale)
-        img = x.generate3DimensionResult(light_value, view_value, time_value)
+        img = x.generate1DimensionResult(time_value)
         img = cv2.resize(img, (380, 280))
         result_image = Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
         result_photo = ImageTk.PhotoImage(result_image)
@@ -258,7 +298,7 @@ introduction.pack()
 cmb = ttk.Combobox(root)
 cmb.pack()
 # 设置下拉菜单中的值
-cmb['value'] = ('mydata','apple-3-dimension', 'apple-1-dimension-time')
+cmb['value'] = ('mydata-3-dimension','apple-3-dimension','t6-1-dimension-time')
 # 设置默认值，即默认下拉框中的内容
 cmb.current(0)
 
@@ -297,7 +337,7 @@ pb.pack(pady=10)
 args = EasyDict({
     'dataset': './data/3x3x3/mydata',
     'savedir': './results/3x3x3/mydata',
-    'type': ['light', 'time', 'view'],
+    'type': ['light','view','time'],
     'dims': [3, 3, 3],
     'DSfactor': 16,
     'neighbor_num': 2,

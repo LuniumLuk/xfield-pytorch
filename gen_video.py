@@ -10,7 +10,7 @@ import cv2
 # args = EasyDict({
 #     'dataset': './data/t5',
 #     'savedir': './results/t5',
-#     'type': ['light', 'time', 'view'],
+#     'type': ['light','view','time'],
 #     'dims': [3, 3, 3],
 #     'DSfactor': 8,
 #     'neighbor_num': 2,
