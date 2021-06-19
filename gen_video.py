@@ -32,12 +32,12 @@ import cv2
 # })
 
 args = EasyDict({
-    'dataset': './data/t7/test_cut.mp4',
-    'savedir': './results/t7',
+    'dataset': './data/video/40倍.mp4',
+    'savedir': './results/video',
     'video': True,
     'type': ['time'],
     'dims': [3],
-    'DSfactor': 2,
+    'DSfactor': 4,
     'neighbor_num': 2,
     'lr': 0.0001,
     'sigma': 0.1,
@@ -58,7 +58,7 @@ else:
 
 num_n = 2
 dims = args.dims
-scale = 90
+scale = 40
 fps = 60
 
 use_gpu = torch.cuda.is_available()

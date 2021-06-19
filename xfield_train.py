@@ -39,12 +39,12 @@ from load_video_data import load_video_data
 # })
 
 args = EasyDict({
-    'dataset': './data/t8/test2.mp4',
-    'savedir': './results/t8',
+    'dataset': './data/video/40倍.mp4',
+    'savedir': './results/video',
     'video': True,
     'type': ['time'],
     'dims': [3],
-    'DSfactor': 2,
+    'DSfactor': 4,
     'neighbor_num': 2,
     'lr': 0.0001,
     'sigma': 0.1,
