@@ -33,7 +33,8 @@ args = EasyDict({
     'neighbor_num': 2,
     'lr': 0.0001,
     'sigma': 0.1,
-    'stop_l1_thr': 0.01 
+    'stop_l1_thr': 0.01,
+    'stop_delta_l1_thr': 0.0005
 })
 
 print('------------ prepare data ------------')
@@ -134,8 +135,6 @@ def train(epoch):
                epoch, (i+1) * len(inputs), len(train_loader.dataset),
                100. * (i+1) / len(train_loader), l1_loss_cumulated), end=' ')
     
-    print('\nElapsed time {:3.1f} m\tAveraged L1 loss = {:3.5f}'.format((time.time()-start_time)/60, l1_loss_cumulated / epoch_size))
-
     model.eval()
 
     if(args.type == ['light','view','time']):
@@ -214,6 +213,8 @@ epoch_end = iter_end // epoch_size
 
 start_time = time.time()
 avg_loss = 1
+last_avg_loss = -1
+delta_avg_loss = 1
 epoch = 0
 
 print('<Train> Total epochs:', epoch_end)
@@ -222,6 +223,15 @@ print('\n------------ start training ------------')
 
 while(epoch <= epoch_end and avg_loss >= args.stop_l1_thr):
     avg_loss = train(epoch)
+    if(last_avg_loss != -1):
+        delta_avg_loss += avg_loss - last_avg_loss
+    last_avg_loss = avg_loss
+
+    print('\nElapsed time {:3.1f} m\tAveraged L1 loss = {:3.5f}\tAveraged delta L1 loss = {:3.5f}'.format((time.time()-start_time)/60, avg_loss, delta_avg_loss / (epoch + 1)))
+    
+    if(delta_avg_loss != 0 and delta_avg_loss / epoch < args.stop_delta_l1_thr):
+        break
+
     epoch += 1
     if(epoch == epoch_end // 2):
         for g in optimizer.param_groups:
