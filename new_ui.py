@@ -194,13 +194,13 @@ def cmb_select_main(dataset):
         num_n = 8  # 生成用的邻居数量
         scale = 90
         x = XFieldTest(args, num_n, scale)
-        img = x.generateResult(light_value, view_value, time_value)
+        img = x.generate3DimensionResult(light_value, view_value, time_value)
         img = cv2.resize(img, (380, 280))
         result_image = Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
         result_photo = ImageTk.PhotoImage(result_image)
         canvas.create_image(210, 200, image=result_photo, tag="image")
         canvas.update()
-    elif dataset == "apple-1-dimension-time":
+    elif dataset == "t6-dimension-time":
         # 第二个滑块
         canvas.create_oval(oval_x2 - 4, oval_y2 - 4, oval_x2 + 4, oval_y2 + 4, fill="black", tag="oval2")
         # 单维轴
@@ -209,6 +209,26 @@ def cmb_select_main(dataset):
         canvas.create_text(585, 330, text='Time', tag="text")
         canvas.create_text(585, 315, text=str(max_coordinate), tag="scale_text")
         canvas.create_text(430, 315, text='0', tag="zero2")
+        args = EasyDict({
+            'dataset': './data/3x3x3/t6',
+            'savedir': './results/3x3x3/t6',
+            'type': ['view'],
+            'dims': [3],
+            'DSfactor': 8,
+            'neighbor_num': 2,
+            'lr': 0.0001,
+            'sigma': 0.1,
+            'stop_l1_thr': 0.01
+        })
+        num_n = 8  # 生成用的邻居数量
+        scale = 90
+        x = XFieldTest(args, num_n, scale)
+        img = x.generate3DimensionResult(light_value, view_value, time_value)
+        img = cv2.resize(img, (380, 280))
+        result_image = Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+        result_photo = ImageTk.PhotoImage(result_image)
+        canvas.create_image(210, 200, image=result_photo, tag="image")
+        canvas.update()
 
     pb.stop()
     tk.messagebox.showinfo('成功', '数据加载完成')
@@ -287,9 +307,8 @@ args = EasyDict({
     })
 num_n = 8  # 生成用的邻居数量
 scale = 90
-
 x = XFieldTest(args, num_n, scale)
-img = x.generateResult(light_value, view_value, time_value)
+img = x.generate3DimensionResult(light_value, view_value, time_value)
 img = cv2.resize(img, (380, 280))
 result_image = Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
 result_photo = ImageTk.PhotoImage(result_image)

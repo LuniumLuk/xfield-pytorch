@@ -134,7 +134,6 @@ def gen_video():
         
     else:
         # args.neighbor_num must be 2
-
         max_coord = dims[0]-1
 
         X_coord = np.linspace(0, max_coord, max_coord * scale)
@@ -145,20 +144,15 @@ def gen_video():
         }
 
         for case, idx in all_dimensions.items():
-
             fourcc = cv2.VideoWriter_fourcc(*'mp4v')
             out = cv2.VideoWriter('{}/rendered videos/rendered_{}.mp4'.format(args.savedir, case), fourcc, fps, (img_w, img_h))
 
             print('--------- interpolating {} ---------'.format(case))
 
             for i in range(len(idx)):
-
+                import math
                 input_coord = np.array([[[idx[i,:]]]])
-
-                indices = np.array([i-1, i+1])
-                indices = np.where(indices < 0, dims[0]-1, indices)
-                indices = np.where(indices > dims[0]-1, 0, indices)
-
+                indices = np.argsort(np.sum(np.square(input_coord[0,0,0,:]-coordinates[:,0,0,:]), -1))[:num_n]
                 neighbor_coord = coordinates[indices,::]
 
                 input_neighbors = img_data[indices,::]
