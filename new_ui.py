@@ -108,6 +108,8 @@ def resize(event):
     canvas.delete("light_text")
     canvas.delete("time_text")
     canvas.delete("view_text")
+    canvas.delete("scale_text_x")
+    canvas.delete("scale_text_y")
     canvas.delete("scale_text")
     canvas.delete("oval1")
     canvas.delete("oval2")
@@ -116,8 +118,8 @@ def resize(event):
     canvas.create_text(510, 340, text='Light:' + str(light_value), tag="light_text")
     canvas.create_text(510, 360, text='View:' + str(view_value), tag="view_text")
     canvas.create_text(510, 380, text='Time:' + str(time_value), tag="time_text")
-    canvas.create_text(585, 315, text=str(max_coordinate), tag="scale_text")
-    canvas.create_text(430, 95, text=str(max_coordinate), tag="scale_text")
+    canvas.create_text(585, 315, text=str(max_coordinate), tag="scale_text_x")
+    canvas.create_text(430, 95, text=str(max_coordinate), tag="scale_text_y")
     canvas.create_text(585, 250, text=str(max_coordinate), tag="scale_text")
 
 
@@ -127,10 +129,57 @@ def cmb_select(event):
     th.start()
     tk.messagebox.showinfo('进行', '开始加载数据请耐心等待')
 
+def delete_all():
+    canvas.delete("time_text")
+    canvas.delete("light_text")
+    canvas.delete("view_text")
+    canvas.delete("oval1")
+    canvas.delete("oval2")
+    canvas.delete("2-dimension-box")
+    canvas.delete("1-dimension-line")
+    canvas.delete("scale_text_x")
+    canvas.delete("scale_text_y")
+    canvas.delete("scale_text")
+    canvas.delete("x_text")
+    canvas.delete("y_text")
+    canvas.delete("text")
+    canvas.delete("zero1")
+    canvas.delete("zero2")
+def draw_all():
+    # 绘制两个0
+    canvas.create_text(430, 250, text='0', tag="zero1")
+    canvas.create_text(430, 315, text='0', tag="zero2")
+    # 绘制放缩栏
+    canvas.create_text(585, 315, text=str(max_coordinate), tag="scale_text")
+    canvas.create_text(430, 95, text=str(max_coordinate), tag="scale_text_y")
+    canvas.create_text(585, 250, text=str(max_coordinate), tag="scale_text_x")
+    # 绘制文字
+    canvas.create_text(440, 80, text='Light', tag="y_text")
+    canvas.create_text(585, 265, text='View', tag="x_text")
+    canvas.create_text(585, 330, text='Time', tag="text")
+    # 绘制指示值
+    canvas.create_text(510, 340, text='Light:0', tag="light_text")
+    canvas.create_text(510, 360, text='View:0', tag="view_text")
+    canvas.create_text(510, 380, text='Time:0', tag="time_text")
+    # 二维空间
+    canvas.create_line(440, 100, 580, 100, tag="2-dimension-box")
+    canvas.create_line(580, 100, 580, 240, tag="2-dimension-box")
+    canvas.create_line(580, 240, 440, 240, tag="2-dimension-box")
+    canvas.create_line(440, 240, 440, 100, tag="2-dimension-box")
+
+    # 单维轴
+    canvas.create_line(440, 300, 580, 300, tag="1-dimension-line")
+    # 第一个滑块
+    canvas.create_oval(oval_x1 - 4, oval_y1 - 4, oval_x1 + 4, oval_y1 + 4, fill="black", tag="oval1")
+    # 第二个滑块
+    canvas.create_oval(oval_x2 - 4, oval_y2 - 4, oval_x2 + 4, oval_y2 + 4, fill="black", tag="oval2")
+
 
 def cmb_select_main(dataset):
     global x, canvas, result_photo
-    if dataset == "apple":
+    delete_all()
+    if dataset == "apple-3-dimension":
+        draw_all()  #绘制所有canvas内容
         args = EasyDict({
             'dataset': './data/3x3x3/apple',
             'savedir': './results/3x3x3/apple',
@@ -151,6 +200,15 @@ def cmb_select_main(dataset):
         result_photo = ImageTk.PhotoImage(result_image)
         canvas.create_image(210, 200, image=result_photo, tag="image")
         canvas.update()
+    elif dataset == "apple-1-dimension-time":
+        # 第二个滑块
+        canvas.create_oval(oval_x2 - 4, oval_y2 - 4, oval_x2 + 4, oval_y2 + 4, fill="black", tag="oval2")
+        # 单维轴
+        canvas.create_line(440, 300, 580, 300, tag="1-dimension-line")
+        canvas.create_text(510, 380, text='Time:0', tag="time_text")
+        canvas.create_text(585, 330, text='Time', tag="text")
+        canvas.create_text(585, 315, text=str(max_coordinate), tag="scale_text")
+        canvas.create_text(430, 315, text='0', tag="zero2")
 
     pb.stop()
     tk.messagebox.showinfo('成功', '数据加载完成')
@@ -159,6 +217,8 @@ def cmb_select_main(dataset):
 # 鼠标左键是否处于按下框选状态
 result_photo = None
 is_mouse_left_button_down = False
+# 模式维度
+mode = ["light","view","time"]
 # 当前移动的是哪个oval
 mouse_moving_oval_index = 1
 max_coordinate = 1
@@ -178,28 +238,18 @@ introduction.pack()
 cmb = ttk.Combobox(root)
 cmb.pack()
 # 设置下拉菜单中的值
-cmb['value'] = ('apple', 'mydata')
+cmb['value'] = ('mydata','apple-3-dimension', 'apple-1-dimension-time')
 # 设置默认值，即默认下拉框中的内容
-cmb.current(1)
+cmb.current(0)
 
 # 生成canvas画布
 canvas = Canvas(root, width=600, height=400, background='white')
 canvas.pack(anchor=CENTER, side=TOP, padx=0, pady=0)
 
-# 图片绘制框
-# canvas.create_line(20, 60, 400, 60)
-# canvas.create_line(20, 60, 20, 340)
-# canvas.create_line(20, 340, 400, 340)
-# canvas.create_line(400, 340, 400, 60)
-
-# View/Light二维空间
-canvas.create_line(440, 100, 580, 100)
-canvas.create_line(580, 100, 580, 240)
-canvas.create_line(580, 240, 440, 240)
-canvas.create_line(440, 240, 440, 100)
-
-# Time轴
-canvas.create_line(440, 300, 580, 300)
+oval_x1 = 440
+oval_y1 = 240
+oval_x2 = 440
+oval_y2 = 300
 
 # Scale
 frame = LabelFrame(root, height=60, width=150, text='改变最大坐标Scale')
@@ -209,27 +259,7 @@ scaleLine = tk.Scale(frame, from_=1, to=10, resolution=1, orient=tk.HORIZONTAL, 
 scaleLine.set(1)  # 设置初始值
 scaleLine.grid(row=0, column=0)
 
-# 第一个滑块
-oval_x1 = 440
-oval_y1 = 240
-canvas.create_oval(oval_x1 - 4, oval_y1 - 4, oval_x1 + 4, oval_y1 + 4, fill="black", tag="oval1")
-# 第二个滑块
-oval_x2 = 440
-oval_y2 = 300
-canvas.create_oval(oval_x2 - 4, oval_y2 - 4, oval_x2 + 4, oval_y2 + 4, fill="black", tag="oval2")
-
-
-canvas.create_text(430, 250, text='0')
-canvas.create_text(430, 315, text='0')
-canvas.create_text(585, 315, text=str(max_coordinate), tag="scale_text")
-canvas.create_text(430, 95, text=str(max_coordinate), tag="scale_text")
-canvas.create_text(585, 250, text=str(max_coordinate), tag="scale_text")
-canvas.create_text(440, 80, text='Light')
-canvas.create_text(585, 265, text='View')
-
-canvas.create_text(510, 340, text='Light:0', tag="light_text")
-canvas.create_text(510, 360, text='View:0', tag="view_text")
-canvas.create_text(510, 380, text='Time:0', tag="time_text")
+draw_all()
 
 # 鼠标位置实时显示模块生成
 x, y = 0, 0
