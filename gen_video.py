@@ -6,19 +6,31 @@ from load_data import load_data
 from easydict import EasyDict
 import cv2
 
+# args = EasyDict({
+#     'dataset': './data/t5',
+#     'savedir': './results/t5',
+#     'type': ['light', 'time', 'view'],
+#     'dims': [3, 3, 3],
+#     'DSfactor': 8,
+#     'neighbor_num': 2,
+#     'lr': 0.0001,
+#     'sigma': 0.1,
+#     'stop_l1_thr': 0.01 
+# })
+
 args = EasyDict({
-    'dataset': './data/t5',
-    'savedir': './results/t5',
-    'type': ['light', 'time', 'view'],
-    'dims': [3, 3, 3],
-    'DSfactor': 8,
+    'dataset': './data/t6',
+    'savedir': './results/t6',
+    'type': ['view'],
+    'dims': [3],
+    'DSfactor': 12,
     'neighbor_num': 2,
     'lr': 0.0001,
     'sigma': 0.1,
     'stop_l1_thr': 0.01 
 })
 
-num_n = 8
+num_n = 2
 dims = args.dims
 scale = 90
 fps = 60
@@ -120,54 +132,53 @@ def gen_video():
             out.release()
             print('')
         
-        else:
-            max_coord = dims[0]-1
+    else:
+        # args.neighbor_num must be 2
 
-            X_coord = np.linspace(0, max_coord, max_coord * scale)
+        max_coord = dims[0]-1
 
-            all_dimensions = {
-                args.type[0]: np.stack([X_coord], 1),
-            }
+        X_coord = np.linspace(0, max_coord, max_coord * scale)
+        X_coord = np.append(X_coord, np.flip(X_coord))
+        
+        all_dimensions = {
+            args.type[0]: np.stack([X_coord], 1),
+        }
 
-            for case, idx in all_dimensions.items():
+        for case, idx in all_dimensions.items():
 
-                fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-                out = cv2.VideoWriter('{}/rendered videos/rendered_{}.mp4'.format(args.savedir, case), fourcc, fps, (img_w, img_h))
+            fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+            out = cv2.VideoWriter('{}/rendered videos/rendered_{}.mp4'.format(args.savedir, case), fourcc, fps, (img_w, img_h))
 
-                print('--------- interpolating {} ---------'.format(case))
+            print('--------- interpolating {} ---------'.format(case))
 
-                for i in range(len(idx)):
+            for i in range(len(idx)):
 
-                    input_coord = np.array([[[idx[i,:]]]])
-                    # find the num_n coords that are cloest to the input_coord
-                    indices = np.argsort(np.sum(np.square(input_coord[0,0,0,:]-coordinates[:,0,0,:]), -1))[:num_n]
+                input_coord = np.array([[[idx[i,:]]]])
 
-                    neighbor_coord = coordinates[indices,::]
+                indices = np.array([i-1, i+1])
+                indices = np.where(indices < 0, dims[0]-1, indices)
+                indices = np.where(indices > dims[0]-1, 0, indices)
 
-                    input_neighbors = img_data[indices,::]
-                    input_flows = precomputed_flows[indices,::]
+                neighbor_coord = coordinates[indices,::]
 
-                    time_index = indices // (dims[0]*dims[1])
-                    rest = indices % (dims[0]*dims[1])
-                    view_index = rest % dims[1]
-                    albedo_index = [0]
+                input_neighbors = img_data[indices,::]
+                input_flows = precomputed_flows[indices,::]
 
-                    img = model(
-                        torch.from_numpy(input_coord).cuda().float().permute(0,3,1,2), 
-                        neighbors=torch.from_numpy(input_neighbors).cuda().float().permute(0,3,1,2),
-                        albedo_index=torch.from_numpy(albedo_index).cuda().long(),
-                        coord_neighbor=torch.from_numpy(neighbor_coord).cuda().permute(0,3,1,2), 
-                        neighbors_flow=torch.from_numpy(input_flows).cuda(), 
-                        test=True
-                    )
+                img = model(
+                    torch.from_numpy(input_coord).cuda().float().permute(0,3,1,2), 
+                    neighbors=torch.from_numpy(input_neighbors).cuda().float().permute(0,3,1,2),
+                    coord_neighbor=torch.from_numpy(neighbor_coord).cuda().permute(0,3,1,2), 
+                    neighbors_flow=torch.from_numpy(input_flows).cuda(), 
+                    test=True
+                )
 
-                    img = img.cpu().detach()[0,::].permute(1,2,0).numpy()
-                    img = np.minimum(np.maximum(img, 0.0), 1.0)
-                    out.write(np.uint8(img * 255))
-                    print('\r<Gen Video> interpolated image {} of {}'.format(i+1, len(idx)), end=' ')
+                img = img.cpu().detach()[0,::].permute(1,2,0).numpy()
+                img = np.minimum(np.maximum(img, 0.0), 1.0)
+                out.write(np.uint8(img * 255))
+                print('\r<Gen Video> interpolated image {} of {}'.format(i+1, len(idx)), end=' ')
 
-                out.release()
-                print('')
+            out.release()
+            print('')
 
 
 gen_video()

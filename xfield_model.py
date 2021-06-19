@@ -154,53 +154,78 @@ class Net(torch.nn.Module):
         img_h = self.img_h
         img_w = self.img_w
 
-        light_flow = flows[:1,0:2,:,:]
-        view_flow = flows[:1,2:4,:,:]
-        time_flow = flows[:1,4:6,:,:]
+        if(self.args.type == ['light','view','time']):
 
-        light_flow_neighbor = neighbors_flow[:,0:2,:,:]
-        view_flow_neighbor = neighbors_flow[:,2:4,:,:]
-        time_flow_neighbor = neighbors_flow[:,4:6,:,:]
+            light_flow = flows[:1,0:2,:,:]
+            view_flow = flows[:1,2:4,:,:]
+            time_flow = flows[:1,4:6,:,:]
 
-        # delta = torch.tile(coord_in - coord_neighbor, (1, 1, img_h, img_w))
-        delta = (coord_in - coord_neighbor).repeat(1, 1, img_h, img_w)
-        delta_light = delta[:,0:1,:,:]
-        delta_view = delta[:,1:2,:,:]
-        delta_time = delta[:,2:3,:,:]
+            light_flow_neighbor = neighbors_flow[:,0:2,:,:]
+            view_flow_neighbor = neighbors_flow[:,2:4,:,:]
+            time_flow_neighbor = neighbors_flow[:,4:6,:,:]
 
-        forward_shading = delta_view*view_flow + delta_time*time_flow + delta_light*light_flow
-        forward_albedo = delta_view*view_flow + delta_time*time_flow
-        shading = neighbors_img / albedo
+            # delta = torch.tile(coord_in - coord_neighbor, (1, 1, img_h, img_w))
+            delta = (coord_in - coord_neighbor).repeat(1, 1, img_h, img_w)
+            delta_light = delta[:,0:1,:,:]
+            delta_view = delta[:,1:2,:,:]
+            delta_time = delta[:,2:3,:,:]
 
-        x_base, y_base = torch.meshgrid(torch.linspace(-1.0, 1.0, self.img_h), torch.linspace(-1.0, 1.0, self.img_w))
-        grid_base = torch.stack((y_base, x_base)).permute(1,2,0).unsqueeze(0).repeat(forward_shading.shape[0],1,1,1).cuda()
+            forward_shading = delta_view*view_flow + delta_time*time_flow + delta_light*light_flow
+            forward_albedo = delta_view*view_flow + delta_time*time_flow
+            shading = neighbors_img / albedo
 
-        forward_shading_grid = grid_base + forward_shading.permute(0,2,3,1)
-        forward_albedo_grid = grid_base + forward_albedo.permute(0,2,3,1)
+            x_base, y_base = torch.meshgrid(torch.linspace(-1.0, 1.0, self.img_h), torch.linspace(-1.0, 1.0, self.img_w))
+            grid_base = torch.stack((y_base, x_base)).permute(1,2,0).unsqueeze(0).repeat(forward_shading.shape[0],1,1,1).cuda()
 
-        warped_shading = torch.nn.functional.grid_sample(shading.float(), forward_shading_grid, mode='bilinear', padding_mode='border', align_corners=False)
-        warped_view_flow = torch.nn.functional.grid_sample(view_flow_neighbor, forward_shading_grid, mode='bilinear', padding_mode='border', align_corners=False)
-        warped_time_flow = torch.nn.functional.grid_sample(time_flow_neighbor, forward_shading_grid, mode='bilinear', padding_mode='border', align_corners=False)
-        warped_light_flow = torch.nn.functional.grid_sample(light_flow_neighbor, forward_shading_grid, mode='bilinear', padding_mode='border', align_corners=False)
-        warped_albedo = torch.nn.functional.grid_sample(albedo.float(), forward_albedo_grid, mode='bilinear', padding_mode='border', align_corners=False)
+            forward_shading_grid = grid_base + forward_shading.permute(0,2,3,1)
+            forward_albedo_grid = grid_base + forward_albedo.permute(0,2,3,1)
 
-        backward_shading = delta_view*warped_view_flow + delta_time*warped_time_flow + delta_light*warped_light_flow 
-        backward_albedo = delta_view*warped_view_flow + delta_time*warped_time_flow
+            warped_shading = torch.nn.functional.grid_sample(shading.float(), forward_shading_grid, mode='bilinear', padding_mode='border', align_corners=False)
+            warped_view_flow = torch.nn.functional.grid_sample(view_flow_neighbor, forward_shading_grid, mode='bilinear', padding_mode='border', align_corners=False)
+            warped_time_flow = torch.nn.functional.grid_sample(time_flow_neighbor, forward_shading_grid, mode='bilinear', padding_mode='border', align_corners=False)
+            warped_light_flow = torch.nn.functional.grid_sample(light_flow_neighbor, forward_shading_grid, mode='bilinear', padding_mode='border', align_corners=False)
+            warped_albedo = torch.nn.functional.grid_sample(albedo.float(), forward_albedo_grid, mode='bilinear', padding_mode='border', align_corners=False)
 
-        # Handeling Consistency
-        dist_shading = torch.sum(torch.abs(backward_shading-forward_shading), dim=1, keepdim=True)
-        weight_shading = torch.exp(-self.args.sigma*img_w*dist_shading)
-        weight_occ_shading = weight_shading / (torch.sum(weight_shading,0,keepdim=True) + epsilon)
-        multiplied = torch.multiply(warped_shading,weight_occ_shading)
-        novel_shading = torch.sum(multiplied,0,keepdim=True)
+            backward_shading = delta_view*warped_view_flow + delta_time*warped_time_flow + delta_light*warped_light_flow 
+            backward_albedo = delta_view*warped_view_flow + delta_time*warped_time_flow
 
-        dist_albedo = torch.sum(torch.abs(backward_albedo-forward_albedo), dim=1, keepdim=True)
-        weight_albedo = torch.exp(-self.args.sigma*img_w*dist_albedo)
-        weight_occ_albedo = weight_albedo / (torch.sum(weight_albedo,0,keepdim=True) + epsilon)
-        multiplied = torch.multiply(warped_albedo,weight_occ_albedo)
-        novel_albedo = torch.sum(multiplied,0,keepdim=True)
+            # Handeling Consistency
+            dist_shading = torch.sum(torch.abs(backward_shading-forward_shading), dim=1, keepdim=True)
+            weight_shading = torch.exp(-self.args.sigma*img_w*dist_shading)
+            weight_occ_shading = weight_shading / (torch.sum(weight_shading,0,keepdim=True) + epsilon)
+            multiplied = torch.multiply(warped_shading,weight_occ_shading)
+            novel_shading = torch.sum(multiplied,0,keepdim=True)
 
-        interpolated = novel_shading * novel_albedo
+            dist_albedo = torch.sum(torch.abs(backward_albedo-forward_albedo), dim=1, keepdim=True)
+            weight_albedo = torch.exp(-self.args.sigma*img_w*dist_albedo)
+            weight_occ_albedo = weight_albedo / (torch.sum(weight_albedo,0,keepdim=True) + epsilon)
+            multiplied = torch.multiply(warped_albedo,weight_occ_albedo)
+            novel_albedo = torch.sum(multiplied,0,keepdim=True)
+
+            interpolated = novel_shading * novel_albedo
+
+        else:
+            flow = flows[:1,::]
+            delta = (coord_in - coord_neighbor).repeat(1, 1, img_h, img_w)
+
+            offset_forward = delta*flow
+            shading = neighbors_img/albedo
+
+            x_base, y_base = torch.meshgrid(torch.linspace(-1.0, 1.0, self.img_h), torch.linspace(-1.0, 1.0, self.img_w))
+            grid_base = torch.stack((y_base, x_base)).permute(1,2,0).unsqueeze(0).repeat(2,1,1,1).cuda()
+        
+            offset_forward_grid = grid_base + offset_forward.permute(0,2,3,1)
+            
+            warped_shading = torch.nn.functional.grid_sample(shading.float(), offset_forward_grid, mode='bilinear', padding_mode='border', align_corners=False)
+            warped_flow = torch.nn.functional.grid_sample(neighbors_flow, offset_forward_grid, mode='bilinear', padding_mode='border', align_corners=False)
+
+            warped_image = warped_shading * albedo
+            offset_backward = delta * warped_flow
+
+            dist = torch.sum(torch.abs(offset_forward-offset_backward), dim=1, keepdim=True)
+            weight = torch.exp(-self.args.sigma*img_w*dist)
+            weight_normalized = weight/(torch.sum(weight,dim=0,keepdim=True) + epsilon)
+            interpolated = torch.sum(torch.multiply(warped_image, weight_normalized), dim=0, keepdim=True)
 
         return interpolated
 
