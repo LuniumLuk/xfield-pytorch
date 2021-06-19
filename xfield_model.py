@@ -3,6 +3,7 @@ import torch.nn as nn
 import numpy as np
 
 class Net(torch.nn.Module):
+    # 所有有训练参数的层都要定义在init里，定义成它的成员形式
     def __init__(self, img_h, img_w, args):
         super().__init__()
 
@@ -10,14 +11,14 @@ class Net(torch.nn.Module):
         self.img_w = img_w
         self.args = args
 
-        pad_x, pad_y, up_x, up_y = self.generate_factors(self.img_h, self.img_w)
-        ngf = 4
-        layer_channels = [ngf*16, ngf*16, ngf*16, ngf*8, ngf*8, ngf*8, ngf*4]
-        self.layer_num = len(pad_x)
+        pad_x, pad_y, up_x, up_y = self.generate_factors(self.img_h, self.img_w)    # padding_x 外层padding  up_x 上采样，图片扩大几倍
+        ngf = 4                                                                     # ngf ？
+        layer_channels = [ngf*16, ngf*16, ngf*16, ngf*8, ngf*8, ngf*8, ngf*4]       # layer_channels 卷积层每一层的通道数是多少
+        self.layer_num = len(pad_x)                                                 #
         layer_channels.extend([ngf*4] * (self.layer_num - len(layer_channels))) 
 
         in_channels = [3, ngf*16+2]
-        in_channels.extend(layer_channels[1:-1])
+        in_channels.extend(layer_channels[1:-1])                #
 
         net_list = []
 
@@ -33,14 +34,15 @@ class Net(torch.nn.Module):
                 net_list.append(nn.Conv2d(in_channels=in_channels[i], out_channels=layer_channels[i], kernel_size=3, stride=1))
                 net_list.append(nn.LeakyReLU())
         
-        self.nets = nn.ModuleList(net_list)
+        self.nets = nn.ModuleList(net_list)   # 强行把nn里的网络转成模型里的网络
             
 
-        self.coordconv = torch.tensor(
+        self.coordconv = torch.tensor(        #
             [[[[0, 2],
                [0, 2]],
               [[0, 0],
                [2, 2]]]], dtype=torch.float32).cuda()
+
         self.coord_pad = nn.ReflectionPad2d(padding=(0,pad_x[0],0,pad_y[0]))
 
         self.flow_pad = nn.ReflectionPad2d((1,1,1,1))
@@ -50,7 +52,7 @@ class Net(torch.nn.Module):
         flow_nparams = self.get_parameter_num()
         print('<Net> decoder params count:', flow_nparams)
 
-        albedos_data = np.ones((9, 3, self.img_h, self.img_w))
+        albedos_data = np.ones((9, 3, self.img_h, self.img_w))      # 所有的色彩数据会先初始化，对每一个可以有色彩数据的维度(view 和 time)，都会初始化albedo
         self.albedos = (torch.nn.Parameter(data=torch.from_numpy(albedos_data), requires_grad=True))
 
         albedo_nparams = self.get_parameter_num() - flow_nparams
@@ -74,7 +76,8 @@ class Net(torch.nn.Module):
         coord_input = x[:1,::]
         coord_neighbor = x[1:,::]
 
-        delta = torch.tile(coord_input - coord_neighbor, (1, 1, img_h, img_w))
+        # delta = torch.tile(coord_input - coord_neighbor, (1, 1, img_h, img_w))
+        delta = (coord_input - coord_neighbor).repeat(1, 1, img_h, img_w)
         delta_light = delta[:,0:1,:,:]
         delta_view = delta[:,1:2,:,:]
         delta_time = delta[:,2:3,:,:]
@@ -87,7 +90,7 @@ class Net(torch.nn.Module):
 
         x_base, y_base = torch.meshgrid(torch.linspace(-1.0, 1.0, self.img_h), torch.linspace(-1.0, 1.0, self.img_w))
         grid_base = torch.stack((y_base, x_base)).permute(1,2,0).unsqueeze(0).repeat(2,1,1,1).cuda()
-
+    
         offset_forward_grid = grid_base + offset_forward.permute(0,2,3,1)
 
         warped_shading = torch.nn.functional.grid_sample(shading.float(), offset_forward_grid, mode='bilinear', padding_mode='border', align_corners=False)
@@ -122,7 +125,8 @@ class Net(torch.nn.Module):
         view_flow_neighbor = neighbors_flow[:,2:4,:,:]
         time_flow_neighbor = neighbors_flow[:,4:6,:,:]
 
-        delta = torch.tile(coord_in - coord_neighbor, (1, 1, img_h, img_w))
+        # delta = torch.tile(coord_in - coord_neighbor, (1, 1, img_h, img_w))
+        delta = (coord_in - coord_neighbor).repeat(1, 1, img_h, img_w)
         delta_light = delta[:,0:1,:,:]
         delta_view = delta[:,1:2,:,:]
         delta_time = delta[:,2:3,:,:]
@@ -215,9 +219,10 @@ class Net(torch.nn.Module):
             x = self.nets[i * 4 + 2](x)
             x = self.nets[i * 4 + 3](x)
             if(i == 0):
-                coordconv_tl = torch.tile(self.coordconv, [x.shape[0],1,1,1])
+                # coordconv_tl = torch.tile(self.coordconv, [x.shape[0],1,1,1])
+                coordconv_tl = self.coordconv.repeat(x.shape[0],1,1,1)
                 coordconv_tl = self.coord_pad(coordconv_tl)
-                x = torch.cat((x, coordconv_tl), dim=1)
+                x = torch.cat((x, coordconv_tl), dim=1)  # 把那一层接到后面去
         
         x = self.flow_pad(x)
         x = self.flow_conv2d(x)
@@ -229,7 +234,7 @@ class Net(torch.nn.Module):
         if(not test and not isinstance(albedo_index, np.int32)):
             albedo_index = albedo_index.int().item()
         
-        albedo = self.albedos[albedo_index,::]
+        albedo = self.albedos[albedo_index,::]           # albedos
         if(test):
             interpolated = self.blending_test(
                 input_x, 
@@ -239,7 +244,7 @@ class Net(torch.nn.Module):
                 x, 
                 albedo)
         else:
-            interpolated = self.blending(input_x, neighbors, x, albedo)
+            interpolated = self.blending(input_x, neighbors, x, albedo)  # blending 相当于是grid操作，input_x 是输入坐标，x是flow图，
         
         if(test):
             return interpolated

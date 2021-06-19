@@ -7,8 +7,8 @@ from easydict import EasyDict
 import cv2
 
 args = EasyDict({
-    'dataset': './data/t5',
-    'savedir': './results/t5',
+    'dataset': './data/3x3x3/apple',
+    'savedir': './results/3x3x3/apple',
     'type': ['light', 'time', 'view'],
     'dims': [3, 3, 3],
     'DSfactor': 8,
@@ -42,12 +42,12 @@ model.eval()
 
 def gen_video():
 
-    precomputed_flows = []
+    precomputed_flows = []   # 把所有图片的flow图提前计算出来，后面可以直接用
 
     for i in range(len(coordinates)):
         flows_out = model(torch.from_numpy(coordinates[[i],::]).permute(0,3,1,2).float().cuda(), flow=True)
         precomputed_flows.append(flows_out[0,::].cpu().detach().numpy())
-      
+
     precomputed_flows = np.stack(precomputed_flows,0)
 
     print(precomputed_flows.shape)
@@ -79,7 +79,6 @@ def gen_video():
     }
 
     for case, idx in all_dimensions.items():
-
         fourcc = cv2.VideoWriter_fourcc(*'mp4v')
         out = cv2.VideoWriter('{}/rendered videos/rendered_{}.mp4'.format(args.savedir, case), fourcc, fps, (img_w, img_h))
 
@@ -88,11 +87,12 @@ def gen_video():
         for i in range(len(idx)):
 
             input_coord = np.array([[[idx[i,:]]]])
+            print("input_coord",input_coord)
             # find the num_n coords that are cloest to the input_coord
-            indices = np.argsort(np.sum(np.square(input_coord[0,0,0,:]-coordinates[:,0,0,:]), -1))[:num_n]
-
+            indices = np.argsort(np.sum(np.square(input_coord[0,0,0,:]-coordinates[:,0,0,:]), -1))[:num_n]  #寻找平方距离
+            print("indices", indices)
             neighbor_coord = coordinates[indices,::]
-
+            print("neighbor_coord", neighbor_coord)
             input_neighbors = img_data[indices,::]
             input_flows = precomputed_flows[indices,::]
 
@@ -100,7 +100,6 @@ def gen_video():
             rest = indices % (dims[0]*dims[1])
             view_index = rest % dims[1]
             albedo_index = view_index*dims[1] + time_index
-
             img = model(
                 torch.from_numpy(input_coord).cuda().float().permute(0,3,1,2), 
                 neighbors=torch.from_numpy(input_neighbors).cuda().float().permute(0,3,1,2),
@@ -109,7 +108,6 @@ def gen_video():
                 neighbors_flow=torch.from_numpy(input_flows).cuda(), 
                 test=True
             )
-
             img = img.cpu().detach()[0,::].permute(1,2,0).numpy()
             img = np.minimum(np.maximum(img, 0.0), 1.0)
             out.write(np.uint8(img * 255))

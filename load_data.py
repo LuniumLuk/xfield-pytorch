@@ -6,7 +6,7 @@ def load_data(args):
 
     image_filenames = os.listdir(args.dataset)
 
-    img =  cv2.imread(os.path.join(args.dataset, image_filenames[0]))
+    img = cv2.imread(os.path.join(args.dataset, image_filenames[0]))
     img_h, img_w, _ = img.shape
     img_h = img_h // args.DSfactor
     img_w = img_w // args.DSfactor
