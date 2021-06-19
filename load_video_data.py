@@ -2,21 +2,9 @@ import numpy as np
 import cv2
 import os
 from easydict import EasyDict
-# args = EasyDict({
-#             'video_path': './data/video/test_cut.mp4',
-#             'savedir': './results/3x3x3/apple',
-#             'savedir': './results/3x3x3/apple',
-#             'type': ['light', 'time', 'view'],
-#             'dims': [3, 3, 3],
-#             'DSfactor': 8,
-#             'neighbor_num': 4,
-#             'lr': 0.0001,
-#             'sigma': 0.1,
-#             'stop_l1_thr': 0.01
-#         })
 
 def load_video_data(args):
-    cap = cv2.VideoCapture(args.video_path)
+    cap = cv2.VideoCapture(args.dataset)
     ret, first_frame = cap.read()
     img = first_frame
     img_h, img_w, _ = img.shape
@@ -56,18 +44,5 @@ def load_video_data(args):
 
     print('\n<Load Video Data> Finish Loading Video data')
 
-    return img_data, coordinates, training_pairs, img_h, img_w
+    return img_data, coordinates, training_pairs, img_h, img_w, i
 
-args = EasyDict({
-            'video_path': './data/video/test_cut.mp4',
-            'savedir': './results/3x3x3/apple',
-            'type': ['light', 'time', 'view'],
-            'dims': [3, 3, 3],
-            'DSfactor': 8,
-            'neighbor_num': 4,
-            'lr': 0.0001,
-            'sigma': 0.1,
-            'stop_l1_thr': 0.01
-        })
-
-load_video_data(args)

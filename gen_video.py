@@ -4,6 +4,7 @@ import numpy as np
 from xfield_model import Net
 from load_data import load_data
 from easydict import EasyDict
+from load_video_data import load_video_data
 import cv2
 
 # args = EasyDict({
@@ -18,27 +19,47 @@ import cv2
 #     'stop_l1_thr': 0.01 
 # })
 
+# args = EasyDict({
+#     'dataset': './data/t6',
+#     'savedir': './results/t6',
+#     'type': ['view'],
+#     'dims': [3],
+#     'DSfactor': 12,
+#     'neighbor_num': 2,
+#     'lr': 0.0001,
+#     'sigma': 0.1,
+#     'stop_l1_thr': 0.01 
+# })
+
 args = EasyDict({
-    'dataset': './data/t6',
-    'savedir': './results/t6',
-    'type': ['view'],
+    'dataset': './data/t7/test_cut.mp4',
+    'savedir': './results/t7',
+    'video': True,
+    'type': ['time'],
     'dims': [3],
-    'DSfactor': 12,
+    'DSfactor': 4,
     'neighbor_num': 2,
     'lr': 0.0001,
     'sigma': 0.1,
-    'stop_l1_thr': 0.01 
+    'stop_l1_thr': 0.01,
+    'stop_delta_l1_thr': 0.0005
 })
+
+
+
+if not os.path.exists(os.path.join(args.savedir,'rendered videos')):
+     os.mkdir(os.path.join(args.savedir,'rendered videos'))
+
+if(args.video):
+    img_data, coordinates, training_pairs, img_h, img_w, frames = load_video_data(args)
+    args.dims = [frames]
+else:
+    img_data, coordinates, training_pairs, img_h, img_w = load_data(args)
 
 num_n = 2
 dims = args.dims
 scale = 90
 fps = 60
-
-if not os.path.exists(os.path.join(args.savedir,'rendered videos')):
-     os.mkdir(os.path.join(args.savedir,'rendered videos'))
-
-img_data, coordinates, training_pairs, img_h, img_w = load_data(args)
 
 use_gpu = torch.cuda.is_available()
 
@@ -139,7 +160,7 @@ def gen_video():
 
         X_coord = np.linspace(0, max_coord, max_coord * scale)
         X_coord = np.append(X_coord, np.flip(X_coord))
-        
+
         all_dimensions = {
             args.type[0]: np.stack([X_coord], 1),
         }
@@ -154,10 +175,7 @@ def gen_video():
             for i in range(len(idx)):
 
                 input_coord = np.array([[[idx[i,:]]]])
-
-                indices = np.array([i-1, i+1])
-                indices = np.where(indices < 0, dims[0]-1, indices)
-                indices = np.where(indices > dims[0]-1, 0, indices)
+                indices = np.argsort(np.sum(np.square(input_coord[0,0,0,:]-coordinates[:,0,0,:]), -1))[:num_n]
 
                 neighbor_coord = coordinates[indices,::]
 

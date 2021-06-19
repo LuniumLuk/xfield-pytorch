@@ -56,7 +56,7 @@ class Net(torch.nn.Module):
         if(args.type == ['light','view','time']):
             albedos_data = np.ones((args.dims[1]*args.dims[2], 3, self.img_h, self.img_w))
             self.albedos = (torch.nn.Parameter(data=torch.from_numpy(albedos_data), requires_grad=True))
-        elif(args.type == ['view'] or args.type == ['light']):
+        else:
             # We do not train albedo for view or light
             self.albedo = torch.from_numpy(np.ones((1, 3, self.img_h, self.img_w))).cuda()
 

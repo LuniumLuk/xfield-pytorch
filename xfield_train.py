@@ -11,6 +11,7 @@ import time
 from xfield_model import Net
 from load_data import load_data
 import flow_vis
+from load_video_data import load_video_data
 
 # args = EasyDict({
 #     'dataset': './data/t5',
@@ -24,18 +25,34 @@ import flow_vis
 #     'stop_l1_thr': 0.01 
 # })
 
+# args = EasyDict({
+#     'dataset': './data/t6',
+#     'savedir': './results/t6',
+#     'type': ['view'],
+#     'dims': [3],
+#     'DSfactor': 12,
+#     'neighbor_num': 2,
+#     'lr': 0.0001,
+#     'sigma': 0.1,
+#     'stop_l1_thr': 0.01,
+#     'stop_delta_l1_thr': 0.0005
+# })
+
 args = EasyDict({
-    'dataset': './data/t6',
-    'savedir': './results/t6',
-    'type': ['view'],
+    'dataset': './data/t7/test_cut.mp4',
+    'savedir': './results/t7',
+    'video': True,
+    'type': ['time'],
     'dims': [3],
-    'DSfactor': 12,
+    'DSfactor': 4,
     'neighbor_num': 2,
     'lr': 0.0001,
     'sigma': 0.1,
-    'stop_l1_thr': 0.01,
-    'stop_delta_l1_thr': 0.0005
+    'stop_l1_thr': 0.002,
+    'stop_delta_l1_thr': 0.0000001
 })
+
+
 
 print('------------ prepare data ------------')
 
@@ -55,7 +72,11 @@ if not os.path.exists(os.path.join(savedir,'saved training')):
 
 print(args.type)
 
-img_data, coordinates, training_pairs, img_h, img_w = load_data(args)
+if(args.video):
+    img_data, coordinates, training_pairs, img_h, img_w, frames = load_video_data(args)
+    args.dims = [frames]
+else:
+    img_data, coordinates, training_pairs, img_h, img_w = load_data(args)
 
 
 dims = args.dims
@@ -214,7 +235,7 @@ epoch_end = iter_end // epoch_size
 start_time = time.time()
 avg_loss = 1
 last_avg_loss = -1
-delta_avg_loss = 1
+delta_avg_loss = 0
 epoch = 0
 
 print('<Train> Total epochs:', epoch_end)
@@ -229,7 +250,7 @@ while(epoch <= epoch_end and avg_loss >= args.stop_l1_thr):
 
     print('\nElapsed time {:3.1f} m\tAveraged L1 loss = {:3.5f}\tAveraged delta L1 loss = {:3.5f}'.format((time.time()-start_time)/60, avg_loss, delta_avg_loss / (epoch + 1)))
     
-    if(delta_avg_loss != 0 and delta_avg_loss / epoch < args.stop_delta_l1_thr):
+    if(delta_avg_loss != 0 and np.abs(delta_avg_loss / epoch) < args.stop_delta_l1_thr):
         break
 
     epoch += 1
