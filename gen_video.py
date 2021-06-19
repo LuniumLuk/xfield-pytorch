@@ -37,7 +37,7 @@ args = EasyDict({
     'video': True,
     'type': ['time'],
     'dims': [3],
-    'DSfactor': 4,
+    'DSfactor': 2,
     'neighbor_num': 2,
     'lr': 0.0001,
     'sigma': 0.1,

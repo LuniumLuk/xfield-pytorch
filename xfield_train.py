@@ -16,7 +16,7 @@ from load_video_data import load_video_data
 # args = EasyDict({
 #     'dataset': './data/t5',
 #     'savedir': './results/t5',
-#     'type': ['light', 'time', 'view'],
+#     'type': ['light', 'view', 'time'],
 #     'dims': [3, 3, 3],
 #     'DSfactor': 8,
 #     'neighbor_num': 2,
@@ -39,17 +39,17 @@ from load_video_data import load_video_data
 # })
 
 args = EasyDict({
-    'dataset': './data/t7/test_cut.mp4',
-    'savedir': './results/t7',
+    'dataset': './data/t8/test2.mp4',
+    'savedir': './results/t8',
     'video': True,
     'type': ['time'],
     'dims': [3],
-    'DSfactor': 4,
+    'DSfactor': 2,
     'neighbor_num': 2,
     'lr': 0.0001,
     'sigma': 0.1,
-    'stop_l1_thr': 0.002,
-    'stop_delta_l1_thr': 0.0000001
+    'stop_l1_thr': 0.01,
+    'stop_delta_l1_thr': 0.0005
 })
 
 
@@ -157,6 +157,7 @@ def train(epoch):
                100. * (i+1) / len(train_loader), l1_loss_cumulated), end=' ')
     
     model.eval()
+    print('')
 
     if(args.type == ['light','view','time']):
 
@@ -216,10 +217,10 @@ def train(epoch):
 
         flow = flows.cpu().detach()[0,::].permute(1,2,0).numpy()
         flow_color = flow_vis.flow_to_color(flow, convert_to_bgr=False)
-        cv2.imwrite('{}/saved training/flow_light.png'.format(args.savedir), np.uint8(flow_color))
+        cv2.imwrite('{}/saved training/flow_{}.png'.format(args.savedir, args.type[0]), np.uint8(flow_color))
 
         img_out = output.cpu().detach()[0,::].permute(1,2,0).numpy()
-        cv2.imwrite('{}/saved training/recons_light_epoch_{}.png'.format(args.savedir, epoch), np.uint8(img_out*255))
+        cv2.imwrite('{}/saved training/recons_{}_epoch_{}.png'.format(args.savedir, args.type[0], epoch), np.uint8(img_out*255))
 
 
     return l1_loss_cumulated / epoch_size

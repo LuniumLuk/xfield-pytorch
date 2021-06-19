@@ -31,15 +31,15 @@ def load_video_data(args):
         img_data.append(img)
 
         pair = np.array([i, i - 1, i + 1])
-        pair = np.where(pair < 0, dims[0] - 1, pair)
-        pair = np.where(pair > dims[0] - 1, 0, pair)
         pairs.append(pair)
         i = i + 1
 
     img_data = np.stack(img_data, 0)
     coordinates = np.stack(coordinates, 0)
-    print(pairs)
+
     training_pairs = np.stack(pairs, 0)
+    training_pairs = np.where(training_pairs < 0, i - 1, training_pairs)
+    training_pairs = np.where(training_pairs > i - 1, 0, training_pairs)
 
 
     print('\n<Load Video Data> Finish Loading Video data')
