@@ -7,45 +7,19 @@ from easydict import EasyDict
 from load_video_data import load_video_data
 import cv2
 
-# args = EasyDict({
-#     'dataset': './data/t5',
-#     'savedir': './results/t5',
-#     'type': ['light','view','time'],
-#     'dims': [3, 3, 3],
-#     'DSfactor': 8,
-#     'neighbor_num': 2,
-#     'lr': 0.0001,
-#     'sigma': 0.1,
-#     'stop_l1_thr': 0.01 
-# })
-
-# args = EasyDict({
-#     'dataset': './data/t6',
-#     'savedir': './results/t6',
-#     'type': ['view'],
-#     'dims': [3],
-#     'DSfactor': 12,
-#     'neighbor_num': 2,
-#     'lr': 0.0001,
-#     'sigma': 0.1,
-#     'stop_l1_thr': 0.01 
-# })
-
+# 示例
 args = EasyDict({
-    'dataset': './data/video/40倍.mp4',
-    'savedir': './results/video',
-    'video': True,
-    'type': ['time'],
-    'dims': [3],
-    'DSfactor': 4,
+    'dataset': './data/img-data/dataset-perfect-result-apple-3-dimension-3x3x3',
+    'savedir': './data/img-results/dataset-perfect-result-apple-3-dimension-3x3x3',
+    'type': ['light','view','time'],
+    'video':False,
+    'dims': [3, 3, 3],
+    'DSfactor': 8,
     'neighbor_num': 2,
     'lr': 0.0001,
     'sigma': 0.1,
-    'stop_l1_thr': 0.01,
-    'stop_delta_l1_thr': 0.0005
+    'stop_l1_thr': 0.01
 })
-
-
 
 if not os.path.exists(os.path.join(args.savedir,'rendered videos')):
      os.mkdir(os.path.join(args.savedir,'rendered videos'))
@@ -58,7 +32,7 @@ else:
 
 num_n = 2
 dims = args.dims
-scale = 40
+scale = 90
 fps = 60
 
 use_gpu = torch.cuda.is_available()

@@ -13,43 +13,19 @@ from load_data import load_data
 import flow_vis
 from load_video_data import load_video_data
 
-# args = EasyDict({
-#     'dataset': './data/t5',
-#     'savedir': './results/t5',
-#     'type': ['light', 'view', 'time'],
-#     'dims': [3, 3, 3],
-#     'DSfactor': 8,
-#     'neighbor_num': 2,
-#     'lr': 0.0001,
-#     'sigma': 0.1,
-#     'stop_l1_thr': 0.01 
-# })
 
-# args = EasyDict({
-#     'dataset': './data/t6',
-#     'savedir': './results/t6',
-#     'type': ['view'],
-#     'dims': [3],
-#     'DSfactor': 12,
-#     'neighbor_num': 2,
-#     'lr': 0.0001,
-#     'sigma': 0.1,
-#     'stop_l1_thr': 0.01,
-#     'stop_delta_l1_thr': 0.0005
-# })
-
+# 示例
 args = EasyDict({
-    'dataset': './data/video/40倍.mp4',
-    'savedir': './results/video',
-    'video': True,
-    'type': ['time'],
-    'dims': [3],
-    'DSfactor': 4,
+    'dataset': './data/img-data/dataset-perfect-result-apple-3-dimension-3x3x3',
+    'savedir': './data/img-results/dataset-perfect-result-apple-3-dimension-3x3x3',
+    'type': ['light','view','time'],
+    'video':False,
+    'dims': [3, 3, 3],
+    'DSfactor': 8,
     'neighbor_num': 2,
     'lr': 0.0001,
     'sigma': 0.1,
-    'stop_l1_thr': 0.01,
-    'stop_delta_l1_thr': 0.0005
+    'stop_l1_thr': 0.01
 })
 
 

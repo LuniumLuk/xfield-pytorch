@@ -192,15 +192,16 @@ def draw_all():
 def cmb_select_main(dataset):
     global x, canvas, result_photo,mode
     delete_all()
-    if dataset == "apple-3-dimension":
+    if dataset == "dataset-perfect-result-apple-3-dimension-3x3x3":
         draw_all()  #绘制所有canvas内容
         args = EasyDict({
-            'dataset': './data/3x3x3/apple',
-            'savedir': './results/3x3x3/apple',
+            'dataset': './data/img-data/dataset-perfect-result-apple-3-dimension-3x3x3',
+            'savedir': './data/img-results/dataset-perfect-result-apple-3-dimension-3x3x3',
             'type': ['light','view','time'],
+            'video': False,
             'dims': [3, 3, 3],
             'DSfactor': 8,
-            'neighbor_num': 4,
+            'neighbor_num': 2,
             'lr': 0.0001,
             'sigma': 0.1,
             'stop_l1_thr': 0.01
@@ -215,12 +216,86 @@ def cmb_select_main(dataset):
         result_photo = ImageTk.PhotoImage(result_image)
         canvas.create_image(210, 200, image=result_photo, tag="image")
         canvas.update()
-    elif dataset == "mydata-3-dimension":
+    elif dataset == "dataset-perfect-result-elephant-3-dimension-3x3x3":
+        draw_all()  # 绘制所有canvas内容
+        args = EasyDict({
+            'dataset': './data/img-data/dataset-perfect-result-elephant-3-dimension-3x3x3',
+            'savedir': './data/img-results/dataset-perfect-result-elephant-3-dimension-3x3x3',
+            'type': ['light', 'view', 'time'],
+            'video': False,
+            'dims': [3, 3, 3],
+            'DSfactor': 8,
+            'neighbor_num': 2,
+            'lr': 0.0001,
+            'sigma': 0.1,
+            'stop_l1_thr': 0.01
+        })
+        mode = ['light', 'view', 'time']
+        num_n = 8  # 生成用的邻居数量
+        scale = 90
+        x = XFieldTest(args, num_n, scale)
+        img = x.generate3DimensionResult(light_value, view_value, time_value)
+        img = cv2.resize(img, (380, 280))
+        result_image = Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+        result_photo = ImageTk.PhotoImage(result_image)
+        canvas.create_image(210, 200, image=result_photo, tag="image")
+        canvas.update()
+    elif dataset == "dataset-perfect-result-teapot-3-dimension-3x3x3":
+        draw_all()  # 绘制所有canvas内容
+        args = EasyDict({
+            'dataset': './data/img-data/dataset-perfect-result-teapot-3-dimension-3x3x3',
+            'savedir': './data/img-results/dataset-perfect-result-teapot-3-dimension-3x3x3',
+            'type': ['light', 'view', 'time'],
+            'video': False,
+            'dims': [3, 3, 3],
+            'DSfactor': 16,
+            'neighbor_num': 2,
+            'lr': 0.0001,
+            'sigma': 0.1,
+            'stop_l1_thr': 0.01
+        })
+        mode = ['light', 'view', 'time']
+        num_n = 8  # 生成用的邻居数量
+        scale = 90
+        x = XFieldTest(args, num_n, scale)
+        img = x.generate3DimensionResult(light_value, view_value, time_value)
+        img = cv2.resize(img, (380, 280))
+        result_image = Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+        result_photo = ImageTk.PhotoImage(result_image)
+        canvas.create_image(210, 200, image=result_photo, tag="image")
+        canvas.update()
+    elif dataset == "dataset-perfect-result-chair-3-dimension-5x5x5":
+        draw_all()  # 绘制所有canvas内容
+        args = EasyDict({
+            'dataset': './data/img-data/dataset-perfect-result-chair-3-dimension-5x5x5',
+            'savedir': './data/img-results/dataset-perfect-result-chair-3-dimension-5x5x5',
+            'type': ['light', 'view', 'time'],
+            'video': False,
+            'dims': [5, 5, 5],
+            'DSfactor': 8,
+            'neighbor_num': 2,
+            'lr': 0.0001,
+            'sigma': 0.1,
+            'stop_l1_thr': 0.01
+        })
+        mode = ['light', 'view', 'time']
+        num_n = 8  # 生成用的邻居数量
+        scale = 90
+        x = XFieldTest(args, num_n, scale)
+        img = x.generate3DimensionResult(light_value, view_value, time_value)
+        img = cv2.resize(img, (380, 280))
+        result_image = Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+        result_photo = ImageTk.PhotoImage(result_image)
+        canvas.create_image(210, 200, image=result_photo, tag="image")
+        canvas.update()
+
+    elif dataset == "ourdata-less-perfect-result-desktop-3-dimension-3x3x3":
         draw_all()  #绘制所有canvas内容
         args = EasyDict({
-            'dataset': './data/3x3x3/mydata',
-            'savedir': './results/3x3x3/mydata',
+            'dataset': './data/img-data/ourdata-less-perfect-result-desktop-3-dimension-3x3x3',
+            'savedir': './data/img-results/ourdata-less-perfect-result-desktop-3-dimension-3x3x3',
             'type': ['light','view','time'],
+            'video': False,
             'dims': [3, 3, 3],
             'DSfactor': 16,
             'neighbor_num': 8,
@@ -238,7 +313,7 @@ def cmb_select_main(dataset):
         result_photo = ImageTk.PhotoImage(result_image)
         canvas.create_image(210, 200, image=result_photo, tag="image")
         canvas.update()
-    elif dataset == "t6-1-dimension-time":
+    elif dataset == "ourdata-less-perfect-result-medal-1-dimension-3":
         # 第二个滑块
         mode = ['time']
         canvas.create_oval(oval_x2 - 4, oval_y2 - 4, oval_x2 + 4, oval_y2 + 4, fill="black", tag="oval2")
@@ -249,11 +324,76 @@ def cmb_select_main(dataset):
         canvas.create_text(585, 315, text=str(max_coordinate), tag="scale_text")
         canvas.create_text(430, 315, text='0', tag="zero2")
         args = EasyDict({
-            'dataset': './data/t6',
-            'savedir': './results/t6',
-            'type': ['view'],
+            'dataset': './data/img-data/ourdata-less-perfect-result-medal-1-dimension-3',
+            'savedir': './data/img-results/ourdata-less-perfect-result-medal-1-dimension-3',
+            'type': ['time'],
             'dims': [3],
-            'DSfactor': 12,
+            'DSfactor': 10,
+            'video':False,
+            'neighbor_num': 2,
+            'lr': 0.0001,
+            'sigma': 0.1,
+            'stop_l1_thr': 0.01,
+            'stop_delta_l1_thr': 0.0005
+        })
+        num_n = 2  # 生成用的邻居数量
+        scale = 90
+        x = XFieldTest(args, num_n, scale)
+        img = x.generate1DimensionResult(time_value)
+        img = cv2.resize(img, (380, 280))
+        result_image = Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+        result_photo = ImageTk.PhotoImage(result_image)
+        canvas.create_image(210, 200, image=result_photo, tag="image")
+        canvas.update()
+    elif dataset == "ourdata-perfect-result-medal-1-dimension-5":
+        # 第二个滑块
+        mode = ['time']
+        canvas.create_oval(oval_x2 - 4, oval_y2 - 4, oval_x2 + 4, oval_y2 + 4, fill="black", tag="oval2")
+        # 单维轴
+        canvas.create_line(440, 300, 580, 300, tag="1-dimension-line")
+        canvas.create_text(510, 380, text='Time:0', tag="time_text")
+        canvas.create_text(585, 330, text='Time', tag="text")
+        canvas.create_text(585, 315, text=str(max_coordinate), tag="scale_text")
+        canvas.create_text(430, 315, text='0', tag="zero2")
+        args = EasyDict({
+            'dataset': './data/img-data/ourdata-perfect-result-medal-1-dimension-5',
+            'savedir': './data/img-results/ourdata-perfect-result-medal-1-dimension-5',
+            'type': ['time'],
+            'dims': [5],
+            'DSfactor': 10,
+            'video': False,
+            'neighbor_num': 2,
+            'lr': 0.0001,
+            'sigma': 0.1,
+            'stop_l1_thr': 0.01,
+            'stop_delta_l1_thr': 0.0005
+        })
+        num_n = 2  # 生成用的邻居数量
+        scale = 90
+        x = XFieldTest(args, num_n, scale)
+        img = x.generate1DimensionResult(time_value)
+        img = cv2.resize(img, (380, 280))
+        result_image = Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+        result_photo = ImageTk.PhotoImage(result_image)
+        canvas.create_image(210, 200, image=result_photo, tag="image")
+        canvas.update()
+    elif dataset == "ourdata-perfect-result-water-1-dimension-7":
+        # 第二个滑块
+        mode = ['time']
+        canvas.create_oval(oval_x2 - 4, oval_y2 - 4, oval_x2 + 4, oval_y2 + 4, fill="black", tag="oval2")
+        # 单维轴
+        canvas.create_line(440, 300, 580, 300, tag="1-dimension-line")
+        canvas.create_text(510, 380, text='Time:0', tag="time_text")
+        canvas.create_text(585, 330, text='Time', tag="text")
+        canvas.create_text(585, 315, text=str(max_coordinate), tag="scale_text")
+        canvas.create_text(430, 315, text='0', tag="zero2")
+        args = EasyDict({
+            'dataset': './data/img-data/ourdata-perfect-result-water-1-dimension-7',
+            'savedir': './data/img-results/ourdata-perfect-result-water-1-dimension-7',
+            'type': ['time'],
+            'dims': [7],
+            'DSfactor': 8,
+            'video': False,
             'neighbor_num': 2,
             'lr': 0.0001,
             'sigma': 0.1,
@@ -295,10 +435,19 @@ introduction = Label(root, text="XField-Pytorch,请在下方选取数据集", fo
 introduction.pack()
 
 # 设置下拉菜单
-cmb = ttk.Combobox(root)
+cmb = ttk.Combobox(root,width=45)
 cmb.pack()
 # 设置下拉菜单中的值
-cmb['value'] = ('mydata-3-dimension','apple-3-dimension','t6-1-dimension-time')
+cmb['value'] = (
+                'dataset-perfect-result-apple-3-dimension-3x3x3',
+                'dataset-perfect-result-elephant-3-dimension-3x3x3',
+                'dataset-perfect-result-teapot-3-dimension-3x3x3',
+                'dataset-perfect-result-chair-3-dimension-5x5x5',
+                'ourdata-less-perfect-result-desktop-3-dimension-3x3x3',
+                'ourdata-less-perfect-result-medal-1-dimension-3',
+                'ourdata-perfect-result-medal-1-dimension-5',
+                'ourdata-perfect-result-water-1-dimension-7',
+                )
 # 设置默认值，即默认下拉框中的内容
 cmb.current(0)
 
@@ -335,11 +484,12 @@ pb.pack(pady=10)
 
 # 初始参数选择与加载绘制
 args = EasyDict({
-    'dataset': './data/3x3x3/mydata',
-    'savedir': './results/3x3x3/mydata',
+    'dataset': './data/img-data/dataset-perfect-result-apple-3-dimension-3x3x3',
+    'savedir': './data/img-results/dataset-perfect-result-apple-3-dimension-3x3x3',
     'type': ['light','view','time'],
+    'video':False,
     'dims': [3, 3, 3],
-    'DSfactor': 16,
+    'DSfactor': 8,
     'neighbor_num': 2,
     'lr': 0.0001,
     'sigma': 0.1,
