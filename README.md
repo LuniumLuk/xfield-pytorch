@@ -2,15 +2,15 @@
 
 ## Introduction
 
-This is a project for Graphics Research Project Course Assignment 2021 of ZJU
+This is a project for Advancement in Computer Graphics Course Assignment 2021 of ZJU
 
-We are trying to rewrite xfield into pytorch
+We rewrote the origin x-field implementation into pytorch
 
 Here is the origin work https://xfields.mpi-inf.mpg.de/
 
 And here is the origin repo https://github.com/m-bemana/xfields
 
-> Note that the flow_vis.py comes from the origin repo
+> Note that the `flow_vis.py` comes from the origin repo
 
 
 
@@ -39,23 +39,23 @@ Extraction code：saf5
 
 ​	Train:
 
-​		Exec xfield_train.py for training.
+​		run `python xfield_train.py` for training.
 
 ​		Note to Modify the args in the file
 
 ​	Test:
 
-​		Exec Gen_video.py for generating result videos
+​		run `python Gen_video.py` for generating result videos
 
-​        Note to Modify the args in the file, It needs to be consistent with the training.
+​   Note to Modify the args in the file, It needs to match the args in the training phase.
 
-​	Also, you can use xfield_test.py to generate a single picture with a brand new coodinate
+​	  Also, you can run `python xfield_test.py` to generate a single picture with a brand new coodinate
 
 
 
 Authors: 
 
-​    LuniumLuk ，Fantast416
+​   LuniumLuk ，Fantast416
 
 
 
