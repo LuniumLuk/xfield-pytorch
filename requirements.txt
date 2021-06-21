@@ -1,0 +1,33 @@
+autopep8==1.5.7
+certifi==2021.5.30
+cycler==0.10.0
+dataclasses @ file:///tmp/build/80754af9/dataclasses_1614363715916/work
+decorator==4.4.2
+easydict==1.9
+imageio==2.9.0
+kiwisolver==1.3.1
+matplotlib==3.3.4
+mkl-fft==1.3.0
+mkl-random==1.0.4
+mkl-service==2.3.0
+networkx==2.5.1
+numpy==1.19.5
+olefile==0.46
+opencv-python==4.5.2.52
+Pillow @ file:///C:/ci/pillow_1617386325740/work
+pycodestyle==2.7.0
+pyparsing==2.4.7
+PyQt5==5.15.4
+PyQt5-Qt5==5.15.2
+PyQt5-sip==12.9.0
+python-dateutil==2.8.1
+PyWavelets==1.1.1
+scikit-image==0.17.2
+scipy==1.5.4
+six==1.16.0
+tifffile==2020.9.3
+toml==0.10.2
+torch==1.7.1
+torchvision==0.8.2
+typing-extensions @ file:///home/ktietz/src/ci_mi/typing_extensions_1612808209620/work
+wincertstore==0.2
